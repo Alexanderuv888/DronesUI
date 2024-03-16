@@ -12,9 +12,9 @@ import com.vol.microservices_UI.enums.DroneModel;
 import com.vol.microservices_UI.model.DroneDTO;
 import com.vol.microservices_UI.services.DroneServiceClient;
 
-@Route("dialog-basic")
+@Route("register-drone-dialog")
 public class RegisterDroneDialog extends Dialog {
-    public static final String REG_DRONE_DIALOG_TITLE = "Register new dron";
+    public static final String REG_DRONE_DIALOG_TITLE = "Register new drone";
 
     private TextField serialNumberField;
     private ComboBox<DroneModel> modelField;

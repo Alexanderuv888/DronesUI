@@ -2,6 +2,7 @@ package com.vol.microservices_UI.services;
 
 import com.vol.microservices_UI.event.DroneRegisteredEvent;
 import com.vol.microservices_UI.model.DroneDTO;
+import com.vol.microservices_UI.model.MedicationDTO;
 import lombok.AllArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.ParameterizedTypeReference;
@@ -12,6 +13,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @Service
@@ -37,9 +39,9 @@ public class DroneServiceClient {
         return drones;
     }
 
-    public List<DroneDTO> getOneDrone() {
+    public List<DroneDTO> getOneDrone(Long droneId) {
         HttpHeaders headers = new HttpHeaders();
-        String url = "http://localhost:8080/drone/get-one";
+        String url = "http://localhost:8080/drone/" + droneId;
         DroneDTO response = restTemplate.getForObject(url, DroneDTO.class);
         return Collections.singletonList(response);
     }
@@ -55,7 +57,7 @@ public class DroneServiceClient {
         // Make HTTP POST request to backend API to save the DroneDTO
         ResponseEntity<Void> responseEntity = restTemplate.exchange(
                 "http://localhost:8080/drone/register",
-                HttpMethod.PUT,
+                HttpMethod.POST,
                 requestEntity,
                 Void.class
         );
@@ -76,12 +78,31 @@ public class DroneServiceClient {
         // Make HTTP POST request to backend API to save the DroneDTO
         ResponseEntity<Void> responseEntity = restTemplate.exchange(
                 "http://localhost:8080/drone/remove",
-                HttpMethod.POST,
+                HttpMethod.DELETE,
                 requestEntity,
                 Void.class
         );
         if (HttpStatus.OK.value() != responseEntity.getStatusCode().value()) {
             throw new RuntimeException("Drone is not deleted. Response is " + responseEntity);
+        }
+    }
+
+    public void loadMedications(DroneDTO drone, Set<MedicationDTO> medications) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // Create HttpEntity with DroneDTO as the request body and headers
+        HttpEntity<Set<Long>> requestEntity = new HttpEntity<>(medications.stream().map(MedicationDTO::getId).collect(Collectors.toSet()), headers);
+
+        // Make HTTP POST request to backend API to save the DroneDTO
+        ResponseEntity<Void> responseEntity = restTemplate.exchange(
+                "http://localhost:8080/drone/load-medications-in-drone/" + drone.getId() ,
+                HttpMethod.PUT,
+                requestEntity,
+                Void.class
+        );
+        if (HttpStatus.OK.value() != responseEntity.getStatusCode().value()) {
+            throw new RuntimeException("Drone is not loaded. Response is " + responseEntity);
         }
     }
 

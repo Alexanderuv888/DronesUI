@@ -8,9 +8,13 @@ import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
+import com.vol.microservices_UI.dialogs.LoadMedicineDialog;
+import com.vol.microservices_UI.dialogs.MessageDialog;
 import com.vol.microservices_UI.dialogs.RegisterDroneDialog;
+import com.vol.microservices_UI.grid.DroneGrid;
 import com.vol.microservices_UI.model.DroneDTO;
 import com.vol.microservices_UI.services.DroneServiceClient;
+import com.vol.microservices_UI.services.MedicationServiceClient;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.client.RestTemplate;
@@ -23,6 +27,7 @@ class MainView extends VerticalLayout {
 
     private final RestTemplate restTemplate;
     private final DroneServiceClient droneServiceClient;
+    private final MedicationServiceClient medicationServiceClient;
 
     private void fetchData(Grid<DroneDTO> grid) {
         List<DroneDTO> drones = droneServiceClient.getAllDrones();
@@ -48,9 +53,11 @@ class MainView extends VerticalLayout {
             fetchData(grid);
         });
 
+        Button loadButton = createLoadButton(grid);
+
 
         add(new H1("Drones"));
-        HorizontalLayout hl = new HorizontalLayout(fetchButton, registerButton, deleteButton);
+        HorizontalLayout hl = new HorizontalLayout(fetchButton, registerButton, deleteButton, loadButton);
         hl.setWidthFull();
         hl.setAlignItems(Alignment.START);
         add(hl);
@@ -73,15 +80,24 @@ class MainView extends VerticalLayout {
         return registerButton;
     }
 
+    private Button createLoadButton(Grid<DroneDTO> grid) {
+        Button loadButton = new Button("Load medicine to drone");
+        loadButton.addClickListener(event -> {
+            if (grid.getSelectedItems().size() == 1) {
+                Dialog dlg = new LoadMedicineDialog(droneServiceClient,
+                        medicationServiceClient,
+                        grid.getSelectedItems().iterator().next());
+                dlg.open();
+            } else {
+                new MessageDialog("Chose one drone for loading medicine.").open();
+            }
+        });
+        return loadButton;
+    }
+
     private Grid<DroneDTO> genearteGrid() {
-        Grid<DroneDTO> grid = new Grid<>(DroneDTO.class, false);
-        grid.addColumn(DroneDTO::getSerialNumber).setHeader("Serial number");
-        grid.addColumn(DroneDTO::getModel).setHeader("Model");
-        grid.addColumn(DroneDTO::getState).setHeader("State");
-        grid.addColumn(DroneDTO::getBatteryCapacity).setHeader("Battery");
-        grid.addColumn(DroneDTO::getWeight).setHeader("Weight");
+        Grid<DroneDTO> grid = new DroneGrid();
         grid.setItems(droneServiceClient.getAllDrones());
-        grid.setSelectionMode(Grid.SelectionMode.MULTI);
         return grid;
     }
 
